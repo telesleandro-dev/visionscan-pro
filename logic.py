@@ -2,35 +2,39 @@ import google.generativeai as genai
 import sqlite3
 import PIL.Image
 
-# Configurações de Segurança e IA
-def configurar_ia(api_key):
+# Função para encontrar o modelo disponível e evitar erro 404
+def obter_modelo_ia(api_key):
     try:
         genai.configure(api_key=api_key)
-        # Busca dinâmica para evitar o erro 404
+        # Lista modelos que suportam geração de conteúdo
         models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        # Tenta o flash-latest, se não o flash comum, se não o primeiro disponível
+        
+        # Prioridade de modelos estáveis
         for m in ["models/gemini-1.5-flash-latest", "models/gemini-1.5-flash", "models/gemini-pro"]:
-            if m in models: return m
-        return models[0]
-    except:
+            if m in models:
+                return m
+        return models[0] if models else "models/gemini-1.5-flash"
+    except Exception:
         return "models/gemini-1.5-flash"
 
-def processar_analise(img, api_key):
+# Lógica principal de perícia
+def executar_pericia(img_file, api_key):
     try:
-        nome_modelo = configurar_ia(api_key)
+        nome_modelo = obter_modelo_ia(api_key)
         model = genai.GenerativeModel(nome_modelo)
         
-        # Redimensionamento para performance no Back-end
+        # Abrir e otimizar imagem internamente
+        img = PIL.Image.open(img_file)
         img.thumbnail((1024, 1024), PIL.Image.LANCZOS)
         
-        prompt = "Atue como perito OSINT. Analise esta imagem: localize, identifique placas e objetos."
+        prompt = "Atue como perito OSINT. Identifique localização, placas e objetos relevantes."
         response = model.generate_content([prompt, img])
         return response.text
     except Exception as e:
-        return f"❌ Erro na Lógica: {str(e)}"
+        return f"❌ Erro no Processamento: {str(e)}"
 
-# Gestão de Dados
-def verificar_login(email, senha):
+# Gestão de usuários
+def validar_agente(email, senha):
     conn = sqlite3.connect('database.db')
     c = conn.cursor()
     c.execute("SELECT name, plan FROM users WHERE email=? AND password=?", (email, senha))
