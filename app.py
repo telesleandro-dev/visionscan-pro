@@ -80,7 +80,7 @@ def processar_ia(img, api_key):
 st.title("🛡️ VisionScan Pro")
 
 # Chave API que você forneceu
-CHAVE_CLIENTE = "AIzaSyCHOfkp2KXaiiFIDFrHV_PsdgrZLliSXb8"
+CHAVE_CLIENTE = "AIzaSyD6YZVV6CvbJyDU0NirMC5wxYD9zUMszmo"
 
 if 'logado' not in st.session_state: st.session_state.logado = False
 
