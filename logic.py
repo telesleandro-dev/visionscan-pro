@@ -2,75 +2,169 @@ import google.generativeai as genai
 from supabase import create_client, Client
 import PIL.Image
 import streamlit as st
+from uuid import UUID
 
-# --- 1. CONFIGURAÇÃO SUPABASE (VIA SECRETS) ---
+# =========================================================
+# SUPABASE
+# =========================================================
+supabase: Client | None = None
 try:
-    # Busca as credenciais no arquivo .streamlit/secrets.toml
-    SUPABASE_URL = st.secrets["SUPABASE_URL"]
-    SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    supabase = create_client(
+        st.secrets["SUPABASE_URL"],
+        st.secrets["SUPABASE_KEY"]
+    )
 except Exception as e:
-    print(f"Erro ao carregar segredos do Supabase: {e}")
+    st.error(f"Erro de conexão com o banco: {e}")
 
-# --- 2. LÓGICA DE SEGURANÇA E IP ---
-def check_ip_limit(ip):
-    """Verifica se o IP já realizou uma consulta gratuita"""
-    try:
-        res = supabase.table("access_logs").select("*").eq("ip_address", ip).execute()
-        return len(res.data) > 0
-    except: return False
-
-def register_ip_usage(ip):
-    """Registra o uso do IP para a barreira de segurança"""
-    try: supabase.table("access_logs").insert({"ip_address": ip}).execute()
-    except: pass
-
-# --- 3. LÓGICA DE IA (SISTEMA DE FALLBACK CONTRA ERRO 404) ---
-def executar_pericia(img_file, api_key):
-    """Executa análise profunda usando o melhor modelo disponível para a chave"""
+# =========================================================
+# MOTOR DE PERÍCIA OSINT (ESTÁVEL)
+# =========================================================
+def executar_pericia(img_file, api_key: str) -> str:
     try:
         genai.configure(api_key=api_key)
-        
-        # Lista dinamicamente os modelos permitidos para evitar erro 404
-        modelos_disponiveis = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-        
-        # Prioridades: Pro (Com Busca) -> Flash (Rápido)
-        prioridades = ["models/gemini-1.5-pro", "models/gemini-1.5-flash"]
-        modelo_escolhido = next((p for p in prioridades if p in modelos_disponiveis), modelos_disponiveis[0])
 
-        # Habilita Google Search Grounding apenas nos modelos compatíveis
-        tools = [{"google_search_retrieval": {}}] if "1.5" in modelo_escolhido else None
-        
-        model = genai.GenerativeModel(model_name=modelo_escolhido, tools=tools)
-        
-        img = PIL.Image.open(img_file)
-        img.thumbnail((1024, 1024), PIL.Image.LANCZOS)
-        
-        prompt = f"""
-        Você é um Assistente de Pesquisa Profissional. Analise esta imagem com rigor técnico:
-        1. LOCALIZAÇÃO: Identifique país, cidade e bairro através de arquitetura e vegetação.
-        2. PESQUISA ATIVA: Use o Google para validar nomes de estabelecimentos e marcas locais.
-        3. SENSIBILIDADE: Detecte detalhes em reflexos, placas e equipamentos de segurança.
-        4. CONCLUSÃO: Apresente um laudo estruturado com fontes e links.
-        (Análise processada via: {modelo_escolhido})
+        modelos_disponiveis = [
+            m.name for m in genai.list_models()
+            if "generateContent" in m.supported_generation_methods
+        ]
+
+        preferidos = [
+            "models/gemini-1.5-flash",
+            "models/gemini-1.0-pro",
+            "models/gemini-pro"
+        ]
+
+        modelo_escolhido = next(
+            (m for m in preferidos if m in modelos_disponiveis),
+            modelos_disponiveis[0]
+        )
+
+        model = genai.GenerativeModel(model_name=modelo_escolhido)
+
+        prompt = """
+Você é um PERITO OSINT SÊNIOR especializado em geolocalização por imagem.
+
+Objetivo: identificar a LOCALIZAÇÃO MAIS PROVÁVEL da imagem.
+
+Regras:
+1. Analise arquitetura, vegetação, placas, clima, relevo, sombras e tráfego.
+2. Compare países e regiões semelhantes.
+3. Evite respostas genéricas. Seja específico.
+4. Se houver incerteza, declare explicitamente.
+
+Apresente obrigatoriamente:
+- Local mais provável (país + região)
+- Até 2 hipóteses alternativas
+- Evidências técnicas observáveis
+- Nível de confiança (%)
+
+Formato:
+## Local mais provável
+## Hipóteses alternativas
+## Evidências técnicas
+## Nível de confiança
         """
-        
+
+        img = PIL.Image.open(img_file)
+        if img.mode in ("RGBA", "P"):
+            img = img.convert("RGB")
+
+        img.thumbnail((1024, 1024), PIL.Image.LANCZOS)
+
         response = model.generate_content([prompt, img])
         return response.text
-    except Exception as e:
-        return f"❌ Erro Crítico na IA: {str(e)}"
 
-# --- 4. GESTÃO DE USUÁRIOS ---
-def validar_agente(email, senha):
+    except Exception as e:
+        return f"❌ Erro na análise: {str(e)}"
+
+
+# =========================================================
+# AUTH (SUPABASE NATIVO)
+# =========================================================
+
+def auth_login(email, password):
     try:
-        res = supabase.table("users").select("*").eq("email", email).eq("password", senha).execute()
+        res = supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
+        # Verifica se o e-mail foi confirmado
+        if not res.user.email_confirmed_at:
+            return "not_confirmed"
+        return res.user
+    except Exception:
+        return None
+
+def auth_get_user():
+    try:
+        res = supabase.auth.get_user()
+        return res.user
+    except Exception:
+        return None
+
+def auth_logout():
+    try:
+        supabase.auth.sign_out()
+    except Exception:
+        pass
+
+
+# =========================================================
+# DADOS DO USUÁRIO
+# =========================================================
+
+def get_user_data(email):
+    """Busca dados de negócio pelo email."""
+    try:
+        res = supabase.table("users").select("*").eq("email", email).execute()
         return res.data[0] if res.data else None
-    except: return None
+    except Exception:
+        return None
 
-def registar_utilizador(nome, email, senha, plano="free"):
+
+# =========================================================
+# CADASTRO SEGURO (SÓ NO AUTH)
+# =========================================================
+
+def registar_utilizador(nome, email, senha):
     try:
-        data = {"name": nome, "email": email, "password": senha, "plan": plano}
-        supabase.table("users").insert(data).execute()
-        return True, "Sucesso"
+        auth_response = supabase.auth.sign_up({
+            "email": email,
+            "password": senha,
+            "options": {"data": {"name": nome}}
+        })
+        return True, "Cadastro realizado com sucesso. Verifique seu e-mail e faça login."
     except Exception as e:
-        return False, "E-mail já cadastrado." if "already exists" in str(e).lower() else (False, str(e))
+        msg_erro = str(e)
+        if "User already registered" in msg_erro or "Email rate limit exceeded" in msg_erro:
+            return False, "E-mail já cadastrado. Verifique sua caixa de entrada."
+        return False, "Erro ao criar conta. Tente outro e-mail."
+
+
+# =========================================================
+# CONTROLE DE CRÉDITOS — POR USER.ID (IMUTÁVEL)
+# =========================================================
+
+def consumir_credito(user_id: str):
+    """
+    Decrementa 1 crédito do usuário pelo ID (UUID).
+    Retorna True se bem-sucedido, False caso contrário.
+    """
+    try:
+        if isinstance(user_id, str):
+            user_id = UUID(user_id)
+
+        res = supabase.table("users").select("credits").eq("id", user_id).execute()
+        
+        if not res.data:
+            return False
+
+        current = res.data[0]["credits"]
+        if current <= 0:
+            return False
+
+        supabase.table("users").update({"credits": current - 1}).eq("id", user_id).execute()
+        return True
+
+    except Exception:
+        return False
