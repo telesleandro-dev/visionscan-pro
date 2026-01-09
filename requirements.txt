@@ -1,5 +1,1 @@
-streamlit
-google-generativeai
-supabase
-Pillow
-pandas
+streamlit, google-generativeai, pandas, pillow,supabase
