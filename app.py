@@ -52,46 +52,8 @@ def ir_acesso():
 
 def logout():
     auth_logout()
-    st.session_state.usuario_logado = None
-    st.session_state.pagina = "Home"
-    st.session_state.resultado = None
-    st.session_state.uploader_key += 1
-
-# =========================================================
-# RESTORE AUTH VIA SUPABASE
-# =========================================================
-if st.session_state.usuario_logado is None:
-    user = auth_get_user()
-    if user:
-        try:
-            res = supabase.auth.get_user()
-            if not res.user.email_confirmed_at:
-                st.warning("⚠️ E-mail não confirmado. Verifique sua caixa de entrada.")
-                auth_logout()
-            else:
-                db_user = get_user_data(user.email)
-                if not db_user:
-                    from logic import supabase
-                    name = user.user_metadata.get("name") if user.user_metadata else user.email.split("@")[0]
-                    supabase.table("users").insert({
-                        "id": user.id,
-                        "email": user.email,
-                        "name": name,
-                        "plan": "free",
-                        "credits": 1
-                    }).execute()
-                    db_user = get_user_data(user.email)
-
-                if db_user:
-                    st.session_state.usuario_logado = {
-                        "id": user.id,
-                        "email": user.email,
-                        "name": db_user.get("name", user.email.split("@")[0]),
-                        "plan": db_user.get("plan", "free"),
-                        "credits": db_user.get("credits", 0)
-                    }
-        except Exception:
-            pass
+    st.session_state.clear()
+    # st.rerun() não é necessário em callbacks
 
 # =========================================================
 # TEMA / CORES — REESTRUTURADO PARA CONTRASTE PERFEITO
@@ -232,10 +194,9 @@ if st.session_state.pagina == "Home":
     <div style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px; margin-bottom: 40px;">
         <h1 style="font-size: 2.8rem; font-weight: 800; color: #0f172a; line-height: 1.2;">Transforme pixels em evidências.</h1>
         <p style="font-size: 1.2rem; color: #64748b; max-width: 600px; margin: 20px auto;">Análise pericial OSINT com IA multimodal. Geolocalização, busca ativa e laudos estruturados — tudo em segundos.</p>
-        <div style="margin-top: 30px;">
-          
     </div>
     """, unsafe_allow_html=True)
+
     # 🔒 FORÇAR LOGIN PARA QUALQUER ANÁLISE REAL
     if st.session_state.usuario_logado is None:
         st.info("🔑 Faça login para usar sua consulta gratuita.")
@@ -260,24 +221,22 @@ if st.session_state.pagina == "Home":
                 )
 
                 # Botão de análise (só aparece se houver arquivo)
-                if file:
-                    if st.button(
-                        "🔍 EXECUTAR PESQUISA PROFUNDA",
-                        key="btn_analisar"
-                    ):
-                        with st.spinner("🔍 Analisando imagem..."):
-                            resultado = executar_pericia(
-                                file,
-                                st.secrets["GEMINI_API_KEY"]
-                            )
-                            from logic import consumir_credito
-                            sucesso = consumir_credito(st.session_state.usuario_logado["id"])
-                            if sucesso:
-                                st.session_state.usuario_logado["credits"] = credits - 1
-                                st.session_state.resultado = resultado
-                            else:
-                                st.warning("⚠️ Análise concluída, mas houve erro ao registrar uso.")
-                                st.session_state.resultado = resultado
+                if st.button("🔍 EXECUTAR PESQUISA PROFUNDA", key="btn_analisar"):
+                    with st.spinner("🔍 Analisando imagem..."):
+                        resultado = executar_pericia(file, st.secrets["GEMINI_API_KEY"])
+                        from logic import consumir_credito, get_user_data
+        
+                        # Consumir crédito no banco
+                        sucesso = consumir_credito(st.session_state.usuario_logado["id"])
+                        if sucesso:
+                            # ATUALIZAR DADOS FRESH DO BANCO IMEDIATAMENTE
+                            db_user_atualizado = get_user_data(st.session_state.usuario_logado["email"])
+                            if db_user_atualizado:
+                                st.session_state.usuario_logado["credits"] = db_user_atualizado.get("credits", 0)
+                            st.session_state.resultado = resultado
+                        else:
+                            st.warning("⚠️ Análise concluída, mas houve erro ao registrar uso.")
+                            st.session_state.resultado = resultado
 
     # Exibir preview da imagem (só se houver arquivo)
     if 'file' in locals() and file:
@@ -292,6 +251,7 @@ if st.session_state.pagina == "Home":
                 f"<div class='report-card'>{st.session_state.resultado}</div>",
                 unsafe_allow_html=True
             )
+
     # ===========================
     # BENEFÍCIOS / DIFERENCIAIS
     # ===========================
@@ -629,45 +589,56 @@ elif st.session_state.pagina == "Acesso":
 
     # Conteúdo baseado na aba ativa
     if st.session_state.aba_ativa == "entrar":
-        st.markdown("###  Acessar Conta")
+        st.markdown("### 👤 Entrar")
         email = st.text_input("E-mail", key="login_email")
         senha = st.text_input("Senha", type="password", key="login_senha")
 
         if st.button("Entrar", key="btn_login"):
-                 u = auth_login(email, senha)
-        if u == "not_confirmed":
-            st.warning("⚠️ E-mail não confirmado. Verifique sua caixa de entrada.")
-        elif u:
-            # Garantir que existe na tabela users
-            db_user = get_user_data(u.email)
-            if not db_user:
-                try:
-                    name = u.user_metadata.get("name") if u.user_metadata else u.email.split("@")[0]
+            try:
+                from logic import supabase
+                res = supabase.auth.sign_in_with_password({
+                    "email": email,
+                    "password": senha
+                })
+                
+                if not getattr(res.user, 'email_confirmed_at', None):
+                    st.warning("⚠️ E-mail não confirmado. Verifique sua caixa de entrada.")
+                    st.stop()
+                    
+                # BUSCA APENAS OS DADOS EXISTENTES
+                db_user = get_user_data(res.user.email)
+                
+                if not db_user:
+                    # USUÁRIO NUNCA LOGOU ANTES - CRIA COM CREDITOS = 1
+                    name = res.user.user_metadata.get("name") if res.user.user_metadata else res.user.email.split("@")[0]
                     supabase.table("users").insert({
-                        "id": u.id,
-                        "email": u.email,
+                        "id": res.user.id,
+                        "email": res.user.email,
                         "name": name,
                         "plan": "free",
                         "credits": 1
                     }).execute()
-                    db_user = get_user_data(u.email)
-                except Exception as e:
-                    st.error(f"Erro ao inicializar conta: {str(e)}")
-                    st.stop()
-
-            if db_user:
-                st.session_state.usuario_logado = {
-                    "id": u.id,
-                    "email": u.email,
-                    "name": db_user.get("name", u.email.split("@")[0]),
-                    "plan": db_user.get("plan", "free"),
-                    "credits": db_user.get("credits", 0)
-                }
-                st.session_state.pagina = "Home"
-            else:
-                st.error("Falha ao carregar dados do usuário.")
-        else:
-            st.error("Credenciais inválidas ou usuário não encontrado.")   
+                    db_user = get_user_data(res.user.email)
+                
+                if db_user:
+                    st.session_state.usuario_logado = {
+                        "id": db_user["id"],
+                        "email": db_user["email"],
+                        "name": db_user.get("name", res.user.email.split("@")[0]),
+                        "plan": db_user.get("plan", "free"),
+                        "credits": db_user.get("credits", 0)
+                    }
+                    st.session_state.pagina = "Home"
+                    st.rerun()
+                else:
+                    st.error("Erro ao carregar dados do usuário.")
+                    
+            except Exception as auth_error:
+                error_msg = str(auth_error).lower()
+                if "invalid credentials" in error_msg or "user not found" in error_msg:
+                    st.error("Credenciais inválidas ou usuário não encontrado.")
+                else:
+                    st.error(f"Erro de autenticação: {str(auth_error)}")
 
     else:  # Criar Conta
         st.markdown("### 🆕 Criar Conta")
