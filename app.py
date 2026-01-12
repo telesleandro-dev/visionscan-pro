@@ -120,7 +120,7 @@ else:
     primary = "#3B82F6"
 
 # =========================================================
-# CSS GLOBAL — COM SUPORTE TOTAL A BOTÕES E TEMAS
+# CSS GLOBAL — COM SUPORTE TOTAL A BOTÕES E TEMAS (COMPATÍVEL COM STREAMLIT 1.35)
 # =========================================================
 st.markdown(f"""
 <style>
@@ -147,6 +147,17 @@ st.markdown(f"""
     background-color: {button_hover} !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+}}
+
+/* Header */
+header {{
+    background: {bg} !important;
+    color: {text} !important;
+}}
+
+/* Título do header */
+header .css-1v3fvcr {{
+    color: {text} !important;
 }}
 
 /* Cards personalizados */
@@ -196,11 +207,6 @@ div[data-testid="stNotification"] {{
     border-left: 5px solid {primary};
     margin-top: 24px;
     color: {text};
-}}
-
-/* Garantir que o header seja visível */
-header {{
-    color: {text} !important;
 }}
 </style>
 """, unsafe_allow_html=True)
