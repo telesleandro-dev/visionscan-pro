@@ -20,30 +20,15 @@ except Exception as e:
 # MOTOR DE PERÍCIA OSINT (ESTÁVEL)
 # =========================================================
 def executar_pericia(img_file, api_key: str) -> str:
+    if img_file is None:
+        return "❌ Nenhuma imagem foi fornecida para análise."
+    
     try:
         genai.configure(api_key=api_key)
-
-        modelos_disponiveis = [
-            m.name for m in genai.list_models()
-            if "generateContent" in m.supported_generation_methods
-        ]
-
-        preferidos = [
-            "models/gemini-1.5-flash",
-            "models/gemini-1.0-pro",
-            "models/gemini-pro"
-        ]
-
-        modelo_escolhido = next(
-            (m for m in preferidos if m in modelos_disponiveis),
-            modelos_disponiveis[0]
-        )
-
-        model = genai.GenerativeModel(model_name=modelo_escolhido)
-
+        
+        # Prompt completo diretamente na função
         prompt = """
-
-Você é um PERITO OSINT SÊNIOR ESPECIALISTA de experiência em geolocalização forense por imagem. Sua especialidade é extrair evidências técnicas de qualquer imagem, mesmo as mais desafiadoras.
+Você é um PERITO OSINT SÊNIOR com 20 anos de experiência em geolocalização forense por imagem. Sua especialidade é extrair evidências técnicas de qualquer imagem, mesmo as mais desafiadoras.
 
 ## 🔍 OBJETIVO PRINCIPAL
 Identificar a LOCALIZAÇÃO GEOGRÁFICA MAIS PROVÁVEL com precisão máxima, usando TODAS as pistas disponíveis.
@@ -145,16 +130,37 @@ Identificar a LOCALIZAÇÃO GEOGRÁFICA MAIS PROVÁVEL com precisão máxima, us
 - QUANTIFIQUE sempre que possível (ex: "80% de confiança")
 - ADMITA incertezas explicitamente
 - PRIORIZE evidências concretas sobre suposições
-        """
-
+"""
+        
+        # Resto do código igual...
+        modelos_disponiveis = [
+            m.name for m in genai.list_models()
+            if "generateContent" in m.supported_generation_methods
+        ]
+        
+        preferidos = [
+            "models/gemini-1.5-pro",
+            "models/gemini-1.5-flash", 
+            "models/gemini-1.0-pro"
+        ]
+        
+        modelo_escolhido = next(
+            (m for m in preferidos if m in modelos_disponiveis),
+            modelos_disponiveis[0]
+        )
+        
+        model = genai.GenerativeModel(model_name=modelo_escolhido)
         img = PIL.Image.open(img_file)
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
-
-        img.thumbnail((1024, 1024), PIL.Image.LANCZOS)
-
+        if img.width > 1024 or img.height > 1024:
+            img.thumbnail((1024, 1024), PIL.Image.LANCZOS)
+            
         response = model.generate_content([prompt, img])
         return response.text
+        
+    except Exception as e:
+        return f"❌ Erro na análise: {str(e)}"
 
     except Exception as e:
         return f"❌ Erro na análise: {str(e)}"
