@@ -120,6 +120,92 @@ else:
     primary = "#3B82F6"
 
 # =========================================================
+# CSS GLOBAL — COM SUPORTE TOTAL A BOTÕES E TEMAS
+# =========================================================
+st.markdown(f"""
+<style>
+/* Fundo e texto global */
+.stApp {{
+    background: {bg};
+    color: {text};
+}}
+
+/* Botões principais do Streamlit - ESTILO OBRIGATÓRIO */
+.stButton > button {{
+    background-color: {button_bg} !important;
+    color: {button_text} !important;
+    border: 1px solid {border} !important;
+    border-radius: 8px !important;
+    padding: 0.4rem 1rem !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}}
+
+.stButton > button:hover {{
+    background-color: {button_hover} !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+}}
+
+/* Cards personalizados */
+.hero, .plano-card-3d, .report-card, .pricing-card {{
+    background: {card} !important;
+    color: {text} !important;
+    border: 1px solid {border} !important;
+}}
+
+/* Links */
+a {{
+    color: {primary} !important;
+}}
+
+/* Inputs */
+.stTextInput > div > div > input,
+.stSelectbox > div > div > select {{
+    background-color: {card} !important;
+    color: {text} !important;
+    border: 1px solid {border} !important;
+}}
+
+/* Mensagens */
+div[data-testid="stNotification"] {{
+    color: {text} !important;
+}}
+
+/* Estilos da Home */
+.hero h1 {{
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1.2;
+    color: {text};
+}}
+.hero p {{
+    color: {sub};
+    font-size: 1.15rem;
+}}
+.pricing-card {{
+    border-radius: 14px;
+    padding: 1.8rem;
+    height: 100%;
+}}
+.report-card {{
+    padding: 24px;
+    border-radius: 14px;
+    border-left: 5px solid {primary};
+    margin-top: 24px;
+    color: {text};
+}}
+
+/* Garantir que o header seja visível */
+header {{
+    color: {text} !important;
+}}
+</style>
+""", unsafe_allow_html=True)
+
+# =========================================================
 # HEADER
 # =========================================================
 h1, h2, h3 = st.columns([6,2,2])
@@ -143,9 +229,6 @@ with h3:
 
 st.markdown("---")
 
-
-
-
 # =========================================================
 # HOME
 # =========================================================
@@ -159,8 +242,7 @@ if st.session_state.pagina == "Home":
         <h1 style="font-size: 2.8rem; font-weight: 800; color: #0f172a; line-height: 1.2;">Transforme pixels em evidências.</h1>
         <p style="font-size: 1.2rem; color: #64748b; max-width: 600px; margin: 20px auto;">Análise pericial OSINT com IA multimodal. Geolocalização, busca ativa e laudos estruturados — tudo em segundos.</p>
         <div style="margin-top: 30px;">
-            <a href="#" onclick="window.parent.postMessage({type:'streamlit:setPage', page:'Acesso'}, '*')" style="background:#2563eb; color:white; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600; display:inline-block; transition:background 0.2s ease;">🔐 Faça login para sua consulta gratuita</a>
-        </div>
+          
     </div>
     """, unsafe_allow_html=True)
 
@@ -194,10 +276,8 @@ if st.session_state.pagina == "Home":
         </div>
         """, unsafe_allow_html=True)
 
+    
     # ===========================
-    # PLANOS DE INVESTIGAÇÃO
-    # ===========================
-        # ===========================
     # PLANOS DE INVESTIGAÇÃO — 3D MODERN CARD
     # ===========================
     st.markdown("## 📊 Planos de Investigação")
