@@ -89,10 +89,14 @@ def auth_login(email, password):
             "password": password
         })
         # Verifica se o e-mail foi confirmado
-        if not res.user.email_confirmed_at:
+        if not getattr(res.user, 'email_confirmed_at', None):
             return "not_confirmed"
         return res.user
-    except Exception:
+    except Exception as e:
+        error_msg = str(e).lower()
+        if "invalid credentials" in error_msg or "user not found" in error_msg:
+            return None
+        # Qualquer outro erro
         return None
 
 def auth_get_user():
