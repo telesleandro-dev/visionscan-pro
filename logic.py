@@ -92,11 +92,8 @@ def auth_login(email, password):
         if not getattr(res.user, 'email_confirmed_at', None):
             return "not_confirmed"
         return res.user
-    except Exception as e:
-        error_msg = str(e).lower()
-        if "invalid credentials" in error_msg or "user not found" in error_msg:
-            return None
-        # Qualquer outro erro
+    except Exception:
+        # Qualquer erro de autenticação retorna None
         return None
 
 def auth_get_user():
@@ -132,18 +129,33 @@ def get_user_data(email):
 
 def registar_utilizador(nome, email, senha):
     try:
+        # Tenta cadastrar diretamente
         auth_response = supabase.auth.sign_up({
             "email": email,
             "password": senha,
             "options": {"data": {"name": nome}}
         })
+        
+        # Se chegou aqui, o cadastro foi aceito pelo Supabase
         return True, "Cadastro realizado com sucesso. Verifique seu e-mail e faça login."
+        
     except Exception as e:
         msg_erro = str(e)
-        if "User already registered" in msg_erro or "Email rate limit exceeded" in msg_erro:
+        
+        # Trata erros específicos conhecidos
+        if "Email rate limit exceeded" in msg_erro:
+            return False, "Limite diário de e-mails atingido. Tente amanhã."
+        elif "invalid email format" in msg_erro.lower():
+            return False, "Formato de e-mail inválido."
+        elif "User already registered" in msg_erro:
             return False, "E-mail já cadastrado. Verifique sua caixa de entrada."
-        return False, "Erro ao criar conta. Tente outro e-mail."
-
+        else:
+            # Qualquer outro erro - tenta interpretar
+            error_lower = msg_erro.lower()
+            if "already registered" in error_lower or "user exists" in error_lower:
+                return False, "E-mail já cadastrado. Verifique sua caixa de entrada."
+            else:
+                return False, "Erro ao criar conta. Tente novamente."
 
 # =========================================================
 # CONTROLE DE CRÉDITOS — POR USER.ID (IMUTÁVEL)
