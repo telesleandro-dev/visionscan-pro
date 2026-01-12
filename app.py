@@ -120,18 +120,18 @@ else:
     primary = "#3B82F6"
 
 # =========================================================
-# CSS GLOBAL — COM SUPORTE TOTAL A BOTÕES E TEMAS (COMPATÍVEL COM STREAMLIT 1.35)
+# CSS GLOBAL — COMPATÍVEL COM STREAMLIT MODERNO
 # =========================================================
 st.markdown(f"""
 <style>
 /* Fundo e texto global */
 .stApp {{
-    background: {bg};
-    color: {text};
+    background-color: {bg} !important;
+    color: {text} !important;
 }}
 
-/* Botões principais do Streamlit - ESTILO OBRIGATÓRIO */
-.stButton > button {{
+/* Botões - novo seletor para Streamlit >=1.36 */
+button[kind="secondary"] {{
     background-color: {button_bg} !important;
     color: {button_text} !important;
     border: 1px solid {border} !important;
@@ -140,10 +140,9 @@ st.markdown(f"""
     font-weight: 600 !important;
     font-size: 0.95rem !important;
     transition: all 0.2s ease !important;
-    cursor: pointer !important;
 }}
 
-.stButton > button:hover {{
+button[kind="secondary"]:hover {{
     background-color: {button_hover} !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
@@ -151,30 +150,19 @@ st.markdown(f"""
 
 /* Header */
 header {{
-    background: {bg} !important;
-    color: {text} !important;
-}}
-
-/* Título do header */
-header .css-1v3fvcr {{
+    background-color: {bg} !important;
     color: {text} !important;
 }}
 
 /* Cards personalizados */
 .hero, .plano-card-3d, .report-card, .pricing-card {{
-    background: {card} !important;
+    background-color: {card} !important;
     color: {text} !important;
     border: 1px solid {border} !important;
 }}
 
-/* Links */
-a {{
-    color: {primary} !important;
-}}
-
 /* Inputs */
-.stTextInput > div > div > input,
-.stSelectbox > div > div > select {{
+input, select {{
     background-color: {card} !important;
     color: {text} !important;
     border: 1px solid {border} !important;
@@ -190,23 +178,11 @@ div[data-testid="stNotification"] {{
     font-size: 2.8rem;
     font-weight: 800;
     line-height: 1.2;
-    color: {text};
+    color: {text} !important;
 }}
 .hero p {{
-    color: {sub};
+    color: {sub} !important;
     font-size: 1.15rem;
-}}
-.pricing-card {{
-    border-radius: 14px;
-    padding: 1.8rem;
-    height: 100%;
-}}
-.report-card {{
-    padding: 24px;
-    border-radius: 14px;
-    border-left: 5px solid {primary};
-    margin-top: 24px;
-    color: {text};
 }}
 </style>
 """, unsafe_allow_html=True)
