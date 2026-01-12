@@ -168,6 +168,15 @@ input, select {{
     border: 1px solid {border} !important;
 }}
 
+/* Labels dos inputs */
+.stTextInput > label,
+.stPasswordInput > label {{
+    color: {text} !important;
+    font-weight: 600 !important;
+    display: block !important;
+    margin-bottom: 0.5rem !important;
+}}
+
 /* Mensagens */
 div[data-testid="stNotification"] {{
     color: {text} !important;
