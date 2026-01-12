@@ -634,42 +634,40 @@ elif st.session_state.pagina == "Acesso":
         senha = st.text_input("Senha", type="password", key="login_senha")
 
         if st.button("Entrar", key="btn_login"):
-            u = auth_login(email, senha)
-            if u == "not_confirmed":
-                st.warning("⚠️ E-mail não confirmado. Verifique sua caixa de entrada.")
-            elif u:
-                db_user = get_user_data(u.email)
-                if not db_user:
-                    try:
-                        name = u.user_metadata.get("name") if u.user_metadata else None
-                        if not name:
-                            name = email.split("@")[0]
-                        from logic import supabase
-                        supabase.table("users").insert({
-                            "id": u.id,
-                            "email": u.email,
-                            "name": name,
-                            "plan": "free",
-                            "credits": 1
-                        }).execute()
-                        db_user = get_user_data(u.email)
-                    except Exception as e:
-                        st.error(f"Erro ao criar conta: {str(e)}")
-                        st.stop()
-
-                if db_user:
-                    st.session_state.usuario_logado = {
+                 u = auth_login(email, senha)
+        if u == "not_confirmed":
+            st.warning("⚠️ E-mail não confirmado. Verifique sua caixa de entrada.")
+        elif u:
+            # Garantir que existe na tabela users
+            db_user = get_user_data(u.email)
+            if not db_user:
+                try:
+                    name = u.user_metadata.get("name") if u.user_metadata else u.email.split("@")[0]
+                    supabase.table("users").insert({
                         "id": u.id,
                         "email": u.email,
-                        "name": db_user.get("name", email.split("@")[0]),
-                        "plan": db_user.get("plan", "free"),
-                        "credits": db_user.get("credits", 0)
-                    }
-                    st.session_state.pagina = "Home"
-                else:
-                    st.error("Falha ao carregar dados do usuário.")
+                        "name": name,
+                        "plan": "free",
+                        "credits": 1
+                    }).execute()
+                    db_user = get_user_data(u.email)
+                except Exception as e:
+                    st.error(f"Erro ao inicializar conta: {str(e)}")
+                    st.stop()
+
+            if db_user:
+                st.session_state.usuario_logado = {
+                    "id": u.id,
+                    "email": u.email,
+                    "name": db_user.get("name", u.email.split("@")[0]),
+                    "plan": db_user.get("plan", "free"),
+                    "credits": db_user.get("credits", 0)
+                }
+                st.session_state.pagina = "Home"
             else:
-                st.error("Credenciais inválidas ou usuário não encontrado.")
+                st.error("Falha ao carregar dados do usuário.")
+        else:
+            st.error("Credenciais inválidas ou usuário não encontrado.")   
 
     else:  # Criar Conta
         st.markdown("### 🆕 Criar Conta")
