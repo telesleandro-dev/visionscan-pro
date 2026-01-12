@@ -227,7 +227,62 @@ if st.session_state.pagina == "Home":
           
     </div>
     """, unsafe_allow_html=True)
+    # 🔒 FORÇAR LOGIN PARA QUALQUER ANÁLISE REAL
+    if st.session_state.usuario_logado is None:
+        st.info("🔑 Faça login para usar sua consulta gratuita.")
+    else:
+        # Buscar dados ATUALIZADOS do banco (fonte de verdade)
+        db_user = get_user_data(st.session_state.usuario_logado["email"])
+        if not db_user:
+            st.error("❌ Erro ao carregar seus dados. Faça logout e login novamente.")
+        else:
+            plan = db_user.get("plan", "free")
+            credits = db_user.get("credits", 0)
+            pode_analisar = (plan != "free") or (credits > 0)
 
+            if not pode_analisar:
+                st.error("❌ Sua consulta gratuita já foi utilizada.")
+            else:
+                st.info("🎁 Você possui 1 consulta gratuita disponível.")
+                file = st.file_uploader(
+                    "Arraste sua evidência aqui",
+                    type=["jpg","jpeg","png","webp","heic"],
+                    key=f"upload_file_{st.session_state.uploader_key}"
+                )
+
+                # Botão de análise (só aparece se houver arquivo)
+                if file:
+                    if st.button(
+                        "🔍 EXECUTAR PESQUISA PROFUNDA",
+                        key="btn_analisar"
+                    ):
+                        with st.spinner("🔍 Analisando imagem..."):
+                            resultado = executar_pericia(
+                                file,
+                                st.secrets["GEMINI_API_KEY"]
+                            )
+                            from logic import consumir_credito
+                            sucesso = consumir_credito(st.session_state.usuario_logado["id"])
+                            if sucesso:
+                                st.session_state.usuario_logado["credits"] = credits - 1
+                                st.session_state.resultado = resultado
+                            else:
+                                st.warning("⚠️ Análise concluída, mas houve erro ao registrar uso.")
+                                st.session_state.resultado = resultado
+
+    # Exibir preview da imagem (só se houver arquivo)
+    if 'file' in locals() and file:
+        st.image(file, use_container_width=True)
+
+    # RESULTADO (NUNCA VAZA)
+    if st.session_state.resultado:
+        if st.session_state.usuario_logado is None:
+            st.session_state.resultado = None
+        else:
+            st.markdown(
+                f"<div class='report-card'>{st.session_state.resultado}</div>",
+                unsafe_allow_html=True
+            )
     # ===========================
     # BENEFÍCIOS / DIFERENCIAIS
     # ===========================
@@ -540,14 +595,32 @@ elif st.session_state.pagina == "Planos":
     st.button("⬅️ Voltar", key="voltar_home", on_click=ir_home)
 
 # =========================================================
-# LOGIN / CADASTRO
+# LOGIN / CADASTRO — SEM TABS (FIX VISUAL)
 # =========================================================
 elif st.session_state.pagina == "Acesso":
 
     st.markdown("## 🔐 Área do Agente")
-    t1, t2 = st.tabs(["Entrar", "Criar Conta"])
 
-    with t1:
+    # Estado para controlar qual aba está ativa
+    if "aba_ativa" not in st.session_state:
+        st.session_state.aba_ativa = "entrar"
+
+    # Botões manuais para simular tabs
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Entrar", key="btn_entrar", use_container_width=True):
+            st.session_state.aba_ativa = "entrar"
+    with col2:
+        if st.button("Criar Conta", key="btn_criar_conta", use_container_width=True):
+            st.session_state.aba_ativa = "criar_conta"
+
+    # Linha de separação
+    st.markdown("---")
+
+    # Conteúdo baseado na aba ativa
+    if st.session_state.aba_ativa == "entrar":
+        st.markdown("###  Acessar Conta")
         email = st.text_input("E-mail", key="login_email")
         senha = st.text_input("Senha", type="password", key="login_senha")
 
@@ -589,7 +662,8 @@ elif st.session_state.pagina == "Acesso":
             else:
                 st.error("Credenciais inválidas ou usuário não encontrado.")
 
-    with t2:
+    else:  # Criar Conta
+        st.markdown("### 🆕 Criar Conta")
         nome = st.text_input("Nome completo", key="cad_nome")
         email = st.text_input("E-mail", key="cad_email")
         senha = st.text_input("Senha", type="password", key="cad_senha")
