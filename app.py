@@ -159,30 +159,76 @@ div[data-testid="stNotification"] {{
 """, unsafe_allow_html=True)
 
 # =========================================================
-# HEADER
+# HEADER — REVISADO PARA UX/UI PROFISSIONAL (SaaS TÉCNICO)
 # =========================================================
-h1, h2, h3 = st.columns([6,2,2])
+header_cols = st.columns([6, 1, 2])  # Hierarquia: Marca | Ação Secundária | CTA Principal
 
-with h1:
-    st.button("🛡️ VisionScan Pro", key="nav_home", on_click=ir_home)
+with header_cols[0]:
+    # ✅ TRATAMENTO COMO MARCA/LOGOTIPO (não botão)
+    st.markdown("<h3 style='margin: 0; font-weight: 600; color: #0F172A;'>🛡️ VisionScan Pro</h3>", unsafe_allow_html=True)
 
-with h2:
+with header_cols[1]:
+    # ✅ DARK MODE COMO AÇÃO SECUNDÁRIA DISCRETA (ícone minimalista)
+    if st.session_state.tema == "Light":
+        icon = "🌙"
+        tooltip = "Ativar modo escuro"
+    else:
+        icon = "☀️"
+        tooltip = "Ativar modo claro"
     st.button(
-        "🌙 Dark Mode" if st.session_state.tema == "Light" else "☀️ Light Mode",
+        icon,
         key="nav_theme",
-        on_click=alternar_tema
+        on_click=alternar_tema,
+        help=tooltip,
+        type="secondary",  # Botão secundário (menos proeminente)
+        use_container_width=False
     )
 
-with h3:
+with header_cols[2]:
+    # ✅ CTA PRIMÁRIO ÚNICO: "Acesso Agente" ou "Sair"
     if st.session_state.usuario_logado:
-        st.markdown(f"👤 **{st.session_state.usuario_logado['name']}**")
-        st.button("🚪 Sair", key="nav_logout", on_click=logout)
+        # ✅ USANDO STREAMLIT NATIVO PARA MANTER A LÓGICA FUNCIONAL
+        col_user, col_logout = st.columns([3, 1])
+        with col_user:
+            # ✅ NOME DO USUÁRIO COM TAMANHO MAIOR
+            st.markdown(f"<span style='font-size: 1.1rem; font-weight: 500; color: #475569;'>👤 {st.session_state.usuario_logado['name']}</span>", unsafe_allow_html=True)
+        with col_logout:
+            # ✅ BOTÃO SAIR FUNCIONAL COM ESTILO PERSONALIZADO
+            st.button("🚪", key="nav_logout", on_click=logout, help="Sair da conta", 
+                     type="secondary", 
+                     use_container_width=True)
     else:
-        st.button("🔑 Acesso Agente", key="nav_login", on_click=ir_acesso)
+        # ✅ BOTÃO ENTRAR EM AZUL ESCURO (COR PERSONALIZADA VIA CSS)
+        st.markdown("""
+        <style>
+        .access-agent-button button {
+            background-color: #235EE6 !important;
+            color: white !important;
+            border: none !important;
+        }
+        .access-agent-button button:hover {
+            background-color: #235EE6 !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        st.markdown('<div class="access-agent-button">', unsafe_allow_html=True)
+        st.button(
+            "🔑 Acesso Agente",
+            key="nav_login",
+            on_click=ir_acesso,
+            help="Entrar como agente autorizado",
+            use_container_width=True
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown("---")
+# Linha separadora sutil — mantém o layout limpo e técnico
+st.markdown("<hr style='margin: 8px 0; border-color: #e5e7eb; height: 1px;'>", unsafe_allow_html=True)
 
-# =========================================================
+# Linha separadora sutil — mantém o layout limpo e técnico
+st.markdown("<hr style='margin: 8px 0; border-color: #e5e7eb; height: 1px;'>", unsafe_allow_html=True)
+
 # HOME
 # =========================================================
 if st.session_state.pagina == "Home":
@@ -566,8 +612,14 @@ elif st.session_state.pagina == "Planos":
 # =========================================================
 # LOGIN / CADASTRO — SEM TABS (FIX VISUAL)
 # =========================================================
+# =========================================================
+# LOGIN / CADASTRO — COM BOTÃO VOLTAR
+# =========================================================
 elif st.session_state.pagina == "Acesso":
 
+    # Botão voltar no topo
+    st.button("⬅️ Voltar", key="voltar_home_acesso", on_click=ir_home)
+    
     st.markdown("## 🔐 Área do Agente")
 
     # Estado para controlar qual aba está ativa
@@ -589,7 +641,7 @@ elif st.session_state.pagina == "Acesso":
 
     # Conteúdo baseado na aba ativa
     if st.session_state.aba_ativa == "entrar":
-        st.markdown("### 👤 Entrar")
+        st.markdown("###  Entrar")
         email = st.text_input("E-mail", key="login_email")
         senha = st.text_input("Senha", type="password", key="login_senha")
 
