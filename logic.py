@@ -17,7 +17,7 @@ except Exception as e:
     st.error(f"Erro de conexão com o banco: {e}")
 
 # =========================================================
-# MOTOR DE PERÍCIA OSINT (ESTÁVEL)
+# MOTOR DE PERÍCIA OSINT (Atualizado)
 # =========================================================
 def executar_pericia(img_file, api_key: str) -> str:
     if img_file is None:
@@ -28,143 +28,125 @@ def executar_pericia(img_file, api_key: str) -> str:
         
         # Prompt completo diretamente na função
         prompt = """
-Você é um PERITO OSINT SÊNIOR com 20 anos de experiência em geolocalização forense por imagem. Sua especialidade é extrair evidências técnicas de qualquer imagem, mesmo as mais desafiadoras.
 
-## 🔍 OBJETIVO PRINCIPAL
-Identificar a LOCALIZAÇÃO GEOGRÁFICA MAIS PROVÁVEL com precisão máxima, usando TODAS as pistas disponíveis.
+Você é um Especialista Sênior em Análise e Interpretação de Imagens, com experiência avançada em:
+visão computacional, análise ambiental, geografia visual, leitura de padrões urbanos e rurais, inferência contextual e OSINT visual.
 
-## 📋 ANÁLISE OBRIGATÓRIA (em ordem de prioridade)
+Sua função não é adivinhar, mas inferir probabilidades com base em evidências visuais observáveis, explicando claramente o raciocínio utilizado.
 
-### 1. INFRAESTRUTURA URBANA/RURAL
-- Tipo de solo/terreno (asfalto, concreto, terra, grama, areia, pedras)
-- Estilo arquitetônico das edificações (colonial, moderno, soviético, islâmico, etc.)
-- Materiais de construção predominantes
-- Altura média dos prédios
-- Presença de infraestrutura específica (postes, fios elétricos, semáforos, placas)
+Objetivo da Análise
 
-### 2. SINALIZAÇÃO E TEXTOS
-- Idioma predominante em placas, outdoors, letreiros
-- Alfabeto utilizado (latino, cirílico, árabe, mandarim, etc.)
-- Formato de placas de trânsito e veículos
-- Números de telefone visíveis (códigos de área)
-- Moedas ou preços visíveis
+Analise a imagem fornecida de forma técnica, cuidadosa e estruturada, identificando pistas visuais relevantes que permitam inferir características do ambiente e possíveis localizações geográficas, sempre de forma probabilística.
 
-### 3. VEÍCULOS (se presentes)
-- Marcas e modelos específicos
-- Cores predominantes
-- Placas de licenciamento (formato, cores, país)
-- Análise de incidência: "Esses veículos são comuns em quais regiões?"
-- Probabilidade geográfica baseada na frota local
+Diretrizes Obrigatórias:
 
-### 4. POPULAÇÃO (se presente)
-- Fenótipo/etnia predominante
-- Roupas típicas ou culturais
-- Linguagem corporal e comportamento social
-- Idade média do grupo
-- Acessórios culturais/religiosos visíveis
+Não faça afirmações categóricas ou absolutas
+Não assuma informações que não estejam visivelmente sustentadas
+Diferencie claramente observação, inferência e hipótese
+Utilize linguagem técnica clara, acessível e objetiva
+Quando houver incerteza, declare explicitamente
+Não cite leis, normas ou autoridades externas
+Não inclua julgamentos morais ou opiniões pessoais
 
-### 5. VEGETAÇÃO E AMBIENTE
-- Tipos de árvores, plantas, flores
-- Gramado (natural vs artificial)
-- Clima aparente (úmido, seco, tropical, temperado)
-- Estação do ano
-- Topografia (montanhas, planícies, litoral, desertos)
+Aspectos que DEVEM ser analisados (quando visíveis):
 
-### 6. INDICADORES TEMPORAIS
-- Hora aproximada (baseada na posição e ângulo das sombras)
-- Data aproximada (baseada em eventos, roupas sazonais, vegetação)
-- Metadados da imagem (se disponíveis): data, hora, coordenadas GPS, modelo da câmera
+Tipo de ambiente:
 
-### 7. ELEMENTOS CULTURAIS
-- Bandeiras, símbolos nacionais
-- Propaganda/comercial local
-- Esportes populares visíveis
-- Religião predominante (igrejas, templos, símbolos)
-- Nível socioeconômico aparente
+Urbano, rural, periurbano, natural, industrial
+Características ambientais
+Vegetação (densidade, tipo aparente, padrão)
+Solo (cor, textura aparente, umidade)
+Relevo (plano, ondulado, montanhoso)
+Clima sugerido (árido, tropical, temperado, úmido)
 
-## 🎯 METODOLOGIA DE ANÁLISE
+Etnias das pessoas e seu contexto na geolocalização
 
-1. **ELIMINAÇÃO**: Descarte regiões que não correspondem às características observadas
-2. **CORRELAÇÃO**: Combine múltiplas pistas para estreitar possibilidades  
-3. **VALIDAÇÃO**: Cruze informações com conhecimento geográfico mundial
-4. **PROBABILIDADE**: Atribua níveis de confiança baseados em evidências concretas
+Elementos construídos:
 
-## 📝 FORMATO DE RESPOSTA OBRIGATÓRIO
+Arquitetura predominante
+Materiais aparentes
+Infraestrutura (fiação, pavimentação, sinalização)
+Pistas culturais ou regionais
+Estilo construtivo
+Organização urbana ou rural
+Elementos que indiquem região do mundo (sem afirmar país específico, salvo alta confiança)
 
-## 🌍 Localização Mais Provável
-[Precisão máxima possível: País → Estado/Província → Cidade/Região → Bairro/Área específica]
+Consistência visual:
 
-## 🚗 Análise de Veículos
-- [Lista detalhada com marcas, modelos e análise de incidência regional]
+Harmonia ou discrepância entre os elementos
+Possíveis indícios de edição ou manipulação (se aplicável)
+Estrutura OBRIGATÓRIA do Relatório de Saída
 
-## 👥 Análise Demográfica  
-- [Etnia/fenótipo predominante e justificativa cultural]
+1. Observações Visuais Objetivas
+Descreva apenas o que é diretamente visível na imagem, sem interpretação.
 
-## 🏗️ Infraestrutura e Ambiente
-- [Solo, edificações, vegetação, clima]
+2. Análise Interpretativa
+Explique o que os elementos observados sugerem em termos de ambiente, região e contexto, sempre justificando cada inferência.
 
-## ⏰ Indicadores Temporais
-- Hora aproximada: [HH:MM]
-- Estação/Data aproximada: [Mês/Estação]
-- Metadados relevantes: [Se disponíveis]
+3. Inferência Geográfica Probabilística:
 
-## 🔍 Hipóteses Alternativas (Top 2)
-1. [Segunda localização mais provável com justificativa]
-2. [Terceira localização mais provável com justificativa]
+Indique possíveis regiões ou zonas geográficas compatíveis com os padrões observados, utilizando termos como:
+baixa probabilidade
+média probabilidade
+alta probabilidade
 
-## 📊 Nível de Confiança
-- [Alto/Médio/Baixo] com justificativa baseada em:
-  - Número de pistas independentes
-  - Qualidade/resolução da imagem  
-  - Consistência entre diferentes elementos
+4. Fatores de Incerteza
+Liste claramente os elementos que limitam a precisão da análise (ângulo da imagem, resolução, ausência de referências, etc.).
 
-## ⚠️ Limitações da Análise
-- [Fatores que reduzem a precisão: baixa resolução, ângulo limitado, etc.]
+5. Conclusão Técnica
+Apresente uma síntese clara, objetiva e prudente, reforçando que se trata de uma inferência baseada em padrões visuais, não de confirmação factual.
 
-## 💡 Recomendações para Investigação Adicional
-- [Sugestões específicas para confirmar a localização: buscar imagens de satélite, verificar registros de veículos, etc.]
+6. Possíveis Países/Estados/cidades/Região.
 
-## REGRAS ABSOLUTAS:
-- NUNCA invente informações que não estão na imagem
-- SEJA específico e técnico, evite generalizações
-- QUANTIFIQUE sempre que possível (ex: "80% de confiança")
-- ADMITA incertezas explicitamente
-- PRIORIZE evidências concretas sobre suposições
+liste 4 possibilidades de localização obdecendo a ordem do mais provavel ao menos provavel.
+
+
+7.Tom e Linguagem
+Técnico, claro e profissional
+Sem sensacionalismo
+Sem promessas de precisão absoluta
+Adequado para relatórios de inteligência visual
 """
         
-        # Resto do código igual...
+        # Lista modelos disponíveis (nomes SEM "models/" prefixo)
         modelos_disponiveis = [
             m.name for m in genai.list_models()
             if "generateContent" in m.supported_generation_methods
         ]
-        
         preferidos = [
-            "models/gemini-1.5-pro",
-            "models/gemini-1.5-flash", 
-            "models/gemini-1.0-pro"
+            "gemini-1.5-pro",
+            "gemini-1.5-flash",
+            "gemini-1.0-pro"
         ]
-        
+
+        # Encontra o primeiro modelo disponível na lista de preferidos
         modelo_escolhido = next(
             (m for m in preferidos if m in modelos_disponiveis),
-            modelos_disponiveis[0]
+            modelos_disponiveis[0] if modelos_disponiveis else "gemini-pro"
         )
-        
+
+        print(f"🔍 Modelo selecionado: {modelo_escolhido}")  # Debug útil
+
         model = genai.GenerativeModel(model_name=modelo_escolhido)
+
         img = PIL.Image.open(img_file)
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
-        if img.width > 1024 or img.height > 1024:
-            img.thumbnail((1024, 1024), PIL.Image.LANCZOS)
-            
+
+        # Redimensiona apenas se necessário (mantém proporção e mais pixels)
+        max_pixels = 3500000  # Limite do Gemini
+        current_pixels = img.width * img.height
+        if current_pixels > max_pixels:
+            ratio = (max_pixels / current_pixels) ** 0.5
+            new_width = int(img.width * ratio)
+            new_height = int(img.height * ratio)
+            img = img.resize((new_width, new_height), PIL.Image.LANCZOS)
+
         response = model.generate_content([prompt, img])
         return response.text
         
     except Exception as e:
         return f"❌ Erro na análise: {str(e)}"
-
-    except Exception as e:
-        return f"❌ Erro na análise: {str(e)}"
-
 
 # =========================================================
 # AUTH (SUPABASE NATIVO)
@@ -216,34 +198,45 @@ def get_user_data(email):
 # =========================================================
 
 def registar_utilizador(nome, email, senha):
+    # Validação básica de formato de e-mail
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_pattern, email):
+        return False, "Email inválido"
+    
     try:
-        # Tenta cadastrar diretamente
+        # Tenta fazer login para verificar se usuário existe e está confirmado
+        try:
+            login_result = supabase.auth.sign_in_with_password({
+                "email": email,
+                "password": senha  # Usa a senha que o usuário está tentando cadastrar
+            })
+            # Se login funcionou, significa que usuário já existe e está confirmado
+            supabase.auth.sign_out()  # Desloga imediatamente
+            return False, "Esse email já possui conta, por favor faça login"
+        except Exception:
+            # Login falhou - pode ser senha errada ou usuário não existe
+            pass
+        
+        # Tenta cadastrar
         auth_response = supabase.auth.sign_up({
             "email": email,
             "password": senha,
             "options": {"data": {"name": nome}}
         })
         
-        # Se chegou aqui, o cadastro foi aceito pelo Supabase
         return True, "Cadastro realizado com sucesso. Verifique seu e-mail e faça login."
         
     except Exception as e:
         msg_erro = str(e)
-        
-        # Trata erros específicos conhecidos
         if "Email rate limit exceeded" in msg_erro:
             return False, "Limite diário de e-mails atingido. Tente amanhã."
         elif "invalid email format" in msg_erro.lower():
-            return False, "Formato de e-mail inválido."
-        elif "User already registered" in msg_erro:
-            return False, "E-mail já cadastrado. Verifique sua caixa de entrada."
+            return False, "Email inválido. Verifique o email e tente novamente"
+        elif "User already registered" in msg_erro or "user already exists" in msg_erro.lower():
+            return False, "Esse email já possui conta, por favor faça login"
         else:
-            # Qualquer outro erro - tenta interpretar
-            error_lower = msg_erro.lower()
-            if "already registered" in error_lower or "user exists" in error_lower:
-                return False, "E-mail já cadastrado. Verifique sua caixa de entrada."
-            else:
-                return False, "Erro ao criar conta. Tente novamente."
+            return False, "Erro ao criar conta. Tente novamente."
 
 # =========================================================
 # CONTROLE DE CRÉDITOS — POR USER.ID (IMUTÁVEL)
