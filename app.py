@@ -53,46 +53,40 @@ def ir_acesso():
 def logout():
     auth_logout()
     st.session_state.clear()
-    # st.rerun() não é necessário em callbacks
 
 # =========================================================
 # TEMA / CORES — REESTRUTURADO PARA CONTRASTE PERFEITO
 # =========================================================
 if st.session_state.tema == "Light":
-    # Paleta Light
     bg = "#FFFFFF"
     text = "#0F172A"
     card = "#F8FAFC"
     border = "#E5E7EB"
     sub = "#64748B"
-    button_bg = "#EFF6FF"          # Azul claro suave
-    button_text = "#2563EB"        # Azul escuro (legível)
-    button_hover = "#DBEAFE"       # Hover mais claro
+    button_bg = "#EFF6FF"
+    button_text = "#2563EB"
+    button_hover = "#DBEAFE"
     primary = "#2563EB"
 else:
-    # Paleta Dark
-    bg = "#0F172A"                 # Fundo escuro elegante (não preto puro)
-    text = "#F8FAFC"               # Texto claro
-    card = "#1E293B"               # Card um pouco mais claro que o fundo
-    border = "#334155"             # Borda sutil
-    sub = "#94A3B8"                # Texto secundário
-    button_bg = "#1E3A8A"          # Azul escuro rico
-    button_text = "#BFDBFE"        # Azul claro suave (legível)
-    button_hover = "#1D4ED8"       # Hover mais intenso
+    bg = "#0F172A"
+    text = "#F8FAFC"
+    card = "#1E293B"
+    border = "#334155"
+    sub = "#94A3B8"
+    button_bg = "#1E3A8A"
+    button_text = "#BFDBFE"
+    button_hover = "#1D4ED8"
     primary = "#3B82F6"
 
 # =========================================================
-# CSS GLOBAL — COMPATÍVEL COM STREAMLIT MODERNO
+# CSS GLOBAL
 # =========================================================
 st.markdown(f"""
 <style>
-/* Fundo e texto global */
 .stApp {{
     background-color: {bg} !important;
     color: {text} !important;
 }}
-
-/* Botões - novo seletor para Streamlit >=1.36 */
 button[kind="secondary"] {{
     background-color: {button_bg} !important;
     color: {button_text} !important;
@@ -103,34 +97,25 @@ button[kind="secondary"] {{
     font-size: 0.95rem !important;
     transition: all 0.2s ease !important;
 }}
-
 button[kind="secondary"]:hover {{
     background-color: {button_hover} !important;
     transform: translateY(-1px) !important;
     box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
 }}
-
-/* Header */
 header {{
     background-color: {bg} !important;
     color: {text} !important;
 }}
-
-/* Cards personalizados */
 .hero, .plano-card-3d, .report-card, .pricing-card {{
     background-color: {card} !important;
     color: {text} !important;
     border: 1px solid {border} !important;
 }}
-
-/* Inputs */
 input, select {{
     background-color: {card} !important;
     color: {text} !important;
     border: 1px solid {border} !important;
 }}
-
-/* Labels dos inputs */
 .stTextInput > label,
 .stPasswordInput > label {{
     color: {text} !important;
@@ -138,13 +123,9 @@ input, select {{
     display: block !important;
     margin-bottom: 0.5rem !important;
 }}
-
-/* Mensagens */
 div[data-testid="stNotification"] {{
     color: {text} !important;
 }}
-
-/* Estilos da Home */
 .hero h1 {{
     font-size: 2.8rem;
     font-weight: 800;
@@ -159,16 +140,30 @@ div[data-testid="stNotification"] {{
 """, unsafe_allow_html=True)
 
 # =========================================================
-# HEADER — REVISADO PARA UX/UI PROFISSIONAL (SaaS TÉCNICO)
+# JAVASCRIPT PARA CONVERSÃO DE HASH
 # =========================================================
-header_cols = st.columns([6, 1, 2])  # Hierarquia: Marca | Ação Secundária | CTA Principal
+st.markdown("""
+<script>
+const url = new URL(window.location);
+if (url.hash && url.hash.startsWith('#')) {
+    const hashParams = new URLSearchParams(url.hash.substring(1));
+    for (const [key, value] of hashParams) {
+        url.searchParams.set(key, value);
+    }
+    url.hash = '';
+    window.history.replaceState({}, '', url.toString());
+}
+</script>
+""", unsafe_allow_html=True)
 
+# =========================================================
+# HEADER
+# =========================================================
+header_cols = st.columns([6, 1, 2])
 with header_cols[0]:
-    # ✅ TRATAMENTO COMO MARCA/LOGOTIPO (não botão)
     st.markdown("<h3 style='margin: 0; font-weight: 600; color: #0F172A;'>🛡️ VisionScan Pro</h3>", unsafe_allow_html=True)
 
 with header_cols[1]:
-    # ✅ DARK MODE COMO AÇÃO SECUNDÁRIA DISCRETA (ícone minimalista)
     if st.session_state.tema == "Light":
         icon = "🌙"
         tooltip = "Ativar modo escuro"
@@ -180,25 +175,20 @@ with header_cols[1]:
         key="nav_theme",
         on_click=alternar_tema,
         help=tooltip,
-        type="secondary",  # Botão secundário (menos proeminente)
+        type="secondary",
         use_container_width=False
     )
 
 with header_cols[2]:
-    # ✅ CTA PRIMÁRIO ÚNICO: "Acesso Agente" ou "Sair"
     if st.session_state.usuario_logado:
-        # ✅ USANDO STREAMLIT NATIVO PARA MANTER A LÓGICA FUNCIONAL
         col_user, col_logout = st.columns([3, 1])
         with col_user:
-            # ✅ NOME DO USUÁRIO COM TAMANHO MAIOR
             st.markdown(f"<span style='font-size: 1.1rem; font-weight: 500; color: #475569;'>👤 {st.session_state.usuario_logado['name']}</span>", unsafe_allow_html=True)
         with col_logout:
-            # ✅ BOTÃO SAIR FUNCIONAL COM ESTILO PERSONALIZADO
             st.button("🚪", key="nav_logout", on_click=logout, help="Sair da conta", 
                      type="secondary", 
                      use_container_width=True)
     else:
-        # ✅ BOTÃO ENTRAR EM AZUL ESCURO (COR PERSONALIZADA VIA CSS)
         st.markdown("""
         <style>
         .access-agent-button button {
@@ -223,19 +213,18 @@ with header_cols[2]:
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
-# Linha separadora sutil — mantém o layout limpo e técnico
 st.markdown("<hr style='margin: 8px 0; border-color: #e5e7eb; height: 1px;'>", unsafe_allow_html=True)
 
-# Linha separadora sutil — mantém o layout limpo e técnico
-st.markdown("<hr style='margin: 8px 0; border-color: #e5e7eb; height: 1px;'>", unsafe_allow_html=True)
 
+# =========================================================
+# MAIN CONTENT
+# =========================================================
+st.markdown('<div class="main-content">', unsafe_allow_html=True)
+
+# =========================================================
 # HOME
 # =========================================================
 if st.session_state.pagina == "Home":
-
-    # ===========================
-    # HERO SECTION
-    # ===========================
     st.markdown("""
     <div style="text-align: center; padding: 60px 20px; background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border-radius: 16px; margin-bottom: 40px;">
         <h1 style="font-size: 2.8rem; font-weight: 800; color: #0f172a; line-height: 1.2;">Transforme pixels em evidências.</h1>
@@ -243,11 +232,9 @@ if st.session_state.pagina == "Home":
     </div>
     """, unsafe_allow_html=True)
 
-    # 🔒 FORÇAR LOGIN PARA QUALQUER ANÁLISE REAL
     if st.session_state.usuario_logado is None:
         st.info("🔑 Faça login para usar sua consulta gratuita.")
     else:
-        # Buscar dados ATUALIZADOS do banco (fonte de verdade)
         db_user = get_user_data(st.session_state.usuario_logado["email"])
         if not db_user:
             st.error("❌ Erro ao carregar seus dados. Faça logout e login novamente.")
@@ -266,16 +253,13 @@ if st.session_state.pagina == "Home":
                     key=f"upload_file_{st.session_state.uploader_key}"
                 )
 
-                # Botão de análise (só aparece se houver arquivo)
                 if st.button("🔍 EXECUTAR PESQUISA PROFUNDA", key="btn_analisar"):
                     with st.spinner("🔍 Analisando imagem..."):
                         resultado = executar_pericia(file, st.secrets["GEMINI_API_KEY"])
                         from logic import consumir_credito, get_user_data
         
-                        # Consumir crédito no banco
                         sucesso = consumir_credito(st.session_state.usuario_logado["id"])
                         if sucesso:
-                            # ATUALIZAR DADOS FRESH DO BANCO IMEDIATAMENTE
                             db_user_atualizado = get_user_data(st.session_state.usuario_logado["email"])
                             if db_user_atualizado:
                                 st.session_state.usuario_logado["credits"] = db_user_atualizado.get("credits", 0)
@@ -284,11 +268,9 @@ if st.session_state.pagina == "Home":
                             st.warning("⚠️ Análise concluída, mas houve erro ao registrar uso.")
                             st.session_state.resultado = resultado
 
-    # Exibir preview da imagem (só se houver arquivo)
     if 'file' in locals() and file:
         st.image(file, use_container_width=True)
 
-    # RESULTADO (NUNCA VAZA)
     if st.session_state.resultado:
         if st.session_state.usuario_logado is None:
             st.session_state.resultado = None
@@ -298,9 +280,6 @@ if st.session_state.pagina == "Home":
                 unsafe_allow_html=True
             )
 
-    # ===========================
-    # BENEFÍCIOS / DIFERENCIAIS
-    # ===========================
     st.markdown("## 🔍 Por que usar o VisionScan Pro?")
     cols = st.columns(3)
 
@@ -328,10 +307,6 @@ if st.session_state.pagina == "Home":
         </div>
         """, unsafe_allow_html=True)
 
-    
-    # ===========================
-    # PLANOS DE INVESTIGAÇÃO — 3D MODERN CARD
-    # ===========================
     st.markdown("## 📊 Planos de Investigação")
     st.markdown("Créditos não expiram. Acumulam. Uso sob demanda.")
 
@@ -342,7 +317,6 @@ if st.session_state.pagina == "Home":
         ("100 Consultas", "R$ 89,90", "https://checkout.exemplo/100", "#8B5CF6"),
     ]
 
-    # CSS personalizado para efeitos 3D e hover
     st.markdown("""
     <style>
     .plano-card-3d {
@@ -444,7 +418,6 @@ if st.session_state.pagina == "Home":
     for i, (nome, preco, link, cor) in enumerate(planos):
         col = cols[i % 2]
         with col:
-            # Card 3D
             st.markdown(f"""
             <div class="plano-card-3d" style="--primary-color: {cor}; --primary-color-dark: {cor}dd;">
                 <div class="glow"></div>
@@ -475,9 +448,6 @@ if st.session_state.pagina == "Home":
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # ===========================
-    # TESTEMUNHO / CONFIANÇA
-    # ===========================
     st.markdown("---")
     st.markdown("""
     <div style="text-align:center; padding:30px; background:#f8fafc; border-radius:16px; margin-top:40px;">
@@ -490,7 +460,6 @@ if st.session_state.pagina == "Home":
 # PLANOS
 # =========================================================
 elif st.session_state.pagina == "Planos":
-
     st.markdown("## 💳 Planos & Créditos")
     st.markdown("""
     - Créditos não expiram  
@@ -498,7 +467,6 @@ elif st.session_state.pagina == "Planos":
     - Uso sob demanda  
     """)
 
-    # Definir planos
     planos = [
         ("10 Consultas", "R$ 29,90", "https://checkout.exemplo/10", "#F59E0B"),
         ("25 Consultas", "R$ 59,90", "https://checkout.exemplo/25", "#10B981"),
@@ -506,7 +474,6 @@ elif st.session_state.pagina == "Planos":
         ("100 Consultas", "R$ 89,90", "https://checkout.exemplo/100", "#8B5CF6"),
     ]
 
-    # CSS personalizado para cards e botões
     st.markdown("""
     <style>
     .plano-card {
@@ -568,12 +535,10 @@ elif st.session_state.pagina == "Planos":
     </style>
     """, unsafe_allow_html=True)
 
-    # Mensagem para usuário deslogado
     if not st.session_state.usuario_logado:
         st.info("🔒 Faça login para comprar créditos e acessar planos premium.")
         st.markdown("---")
 
-    # Renderizar planos
     cols = st.columns(2)
     for i, (nome, preco, link, cor) in enumerate(planos):
         col = cols[i % 2]
@@ -585,7 +550,6 @@ elif st.session_state.pagina == "Planos":
             """, unsafe_allow_html=True)
 
             if st.session_state.usuario_logado:
-                # Botão para comprar (logado)
                 if st.button(
                     "Comprar agora",
                     key=f"comprar_{nome.replace(' ', '_')}",
@@ -594,7 +558,6 @@ elif st.session_state.pagina == "Planos":
                 ):
                     st.markdown(f'<script>window.open("{link}", "_blank");</script>', unsafe_allow_html=True)
             else:
-                # Botão para login (deslogado)
                 if st.button(
                     "Comprar agora",
                     key=f"login_{nome.replace(' ', '_')}",
@@ -605,47 +568,38 @@ elif st.session_state.pagina == "Planos":
 
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # Botão voltar
     st.markdown("---")
     st.button("⬅️ Voltar", key="voltar_home", on_click=ir_home)
 
 # =========================================================
-# LOGIN / CADASTRO — SEM TABS (FIX VISUAL)
-# =========================================================
-# =========================================================
-# LOGIN / CADASTRO — COM BOTÃO VOLTAR
+# LOGIN / CADASTRO 
 # =========================================================
 elif st.session_state.pagina == "Acesso":
-
-    # Botão voltar no topo
     st.button("⬅️ Voltar", key="voltar_home_acesso", on_click=ir_home)
-    
     st.markdown("## 🔐 Área do Agente")
-
-    # Estado para controlar qual aba está ativa
+    
     if "aba_ativa" not in st.session_state:
         st.session_state.aba_ativa = "entrar"
 
-    # Botões manuais para simular tabs
-    col1, col2 = st.columns(2)
-
+    col1, col2, col3 = st.columns(3)
     with col1:
-        if st.button("Entrar", key="btn_entrar", use_container_width=True):
+        if st.button("🔐 Entrar", key="btn_entrar_manual", use_container_width=True):
             st.session_state.aba_ativa = "entrar"
     with col2:
-        if st.button("Criar Conta", key="btn_criar_conta", use_container_width=True):
+        if st.button("🆕 Criar Conta", key="btn_criar_conta_manual", use_container_width=True):
             st.session_state.aba_ativa = "criar_conta"
+    with col3:
+        if st.button("❓ Esqueci Senha", key="btn_esqueci_senha_aba", use_container_width=True):
+            st.session_state.aba_ativa = "esqueci_senha"
 
-    # Linha de separação
     st.markdown("---")
 
-    # Conteúdo baseado na aba ativa
     if st.session_state.aba_ativa == "entrar":
-        st.markdown("###  Entrar")
+        st.markdown("### 👤 Entrar")
         email = st.text_input("E-mail", key="login_email")
         senha = st.text_input("Senha", type="password", key="login_senha")
 
-        if st.button("Entrar", key="btn_login"):
+        if st.button("Entrar", key="btn_login_manual"):
             try:
                 from logic import supabase
                 res = supabase.auth.sign_in_with_password({
@@ -657,11 +611,9 @@ elif st.session_state.pagina == "Acesso":
                     st.warning("⚠️ E-mail não confirmado. Verifique sua caixa de entrada.")
                     st.stop()
                     
-                # BUSCA APENAS OS DADOS EXISTENTES
                 db_user = get_user_data(res.user.email)
                 
                 if not db_user:
-                    # USUÁRIO NUNCA LOGOU ANTES - CRIA COM CREDITOS = 1
                     name = res.user.user_metadata.get("name") if res.user.user_metadata else res.user.email.split("@")[0]
                     supabase.table("users").insert({
                         "id": res.user.id,
@@ -692,15 +644,38 @@ elif st.session_state.pagina == "Acesso":
                 else:
                     st.error(f"Erro de autenticação: {str(auth_error)}")
 
-    else:  # Criar Conta
+    elif st.session_state.aba_ativa == "criar_conta":
         st.markdown("### 🆕 Criar Conta")
         nome = st.text_input("Nome completo", key="cad_nome")
         email = st.text_input("E-mail", key="cad_email")
         senha = st.text_input("Senha", type="password", key="cad_senha")
 
-        if st.button("Criar conta", key="btn_cadastrar"):
+        if st.button("Criar conta", key="btn_cadastrar_manual"):
             ok, msg = registar_utilizador(nome, email, senha)
             if ok:
                 st.success(msg)
             else:
                 st.error(msg)
+                
+    elif st.session_state.aba_ativa == "esqueci_senha":
+        st.markdown("### 🔑 Recuperar Senha")
+        st.info("🔒 Por motivos de segurança, a recuperação de senha é feita manualmente pela equipe de suporte.")
+        
+        st.markdown("""
+        <div style="background: #f8fafc; padding: 20px; border-radius: 12px; border-left: 4px solid #2563eb;">
+            <h4>📧 Como solicitar recuperação:</h4>
+            <ol>
+                <li>Envie um e-mail para <strong>suporte@visionscanpro.com</strong></li>
+                <li>Inclua seu <strong>e-mail cadastrado</strong></li>
+                <li>Mencione seu <strong>nome completo</strong></li>
+                <li>Nossa equipe responderá em até 24 horas</li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        if st.button("✉️ Enviar e-mail agora", key="btn_email_suporte"):
+            st.markdown('''
+            <script>
+            window.open("mailto:suporte@visionscanpro.com?subject=Recuperação%20de%20Senha%20-%20VisionScan%20Pro&body=Olá%2C%0D%0A%0D%0APreciso%20recuperar%20minha%20senha%20para%20acessar%20o%20VisionScan%20Pro.%0D%0A%0D%0ADados%20para%20verificação%3A%0D%0A%E2%80%A2%20E-mail%20cadastrado%3A%20%0D%0A%E2%80%A2%20Nome%20completo%3A%20%0D%0A%0D%0AObrigado!", "_blank");
+            </script>
+            ''', unsafe_allow_html=True)
