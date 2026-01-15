@@ -25,25 +25,58 @@ def executar_pericia(img_file, api_key: str) -> str:
     
     try:
         genai.configure(api_key=api_key)
+
+        # =========================================================
+        # EXTRAÇÃO DE METADADOS EXIF
+        # =========================================================
+        exif_info = ""
+        try:
+            from PIL import Image
+            from PIL.ExifTags import TAGS
+            
+            # Criar uma cópia do arquivo para extrair EXIF
+            img_file.seek(0)  # Garantir que estamos no início
+            temp_img = Image.open(img_file)
+            
+            exifdata = temp_img.getexif()
+            if exifdata:
+                exif_dict = {}
+                for tag_id, value in exifdata.items():
+                    tag = TAGS.get(tag_id, tag_id)
+                    # Tratar valores binários
+                    if isinstance(value, bytes):
+                        try:
+                            value = value.decode('utf-8', errors='ignore')
+                        except:
+                            value = str(value)
+                    exif_dict[str(tag)] = value
+                
+                # Formatar como texto para o prompt
+                exif_info = "\nMETADADOS EXIF ENCONTRADOS:\n"
+                for key, value in exif_dict.items():
+                    exif_info += f"- {key}: {value}\n"
+            else:
+                exif_info = "\nNenhum metadado EXIF encontrado na imagem.\n"
+                
+        except Exception as exif_error:
+            exif_info = f"\nErro ao extrair metadados EXIF: {str(exif_error)}\n"
         
         # Prompt completo diretamente na função
-        prompt = """
+        prompt = f"""
 
 Você é um Analista Sênior em Inteligência Visual e Geolocalização por Imagem, especializado em precisão técnica, rastreabilidade de evidências e inferência baseada em dados objetivos.
-
 Sua função não é gerar respostas genéricas, mas produzir conclusões claras, justificáveis e hierarquizadas, sempre deixando explícita a base de cada decisão.
 
-REGRA FUNDAMENTAL (OBRIGATÓRIA)
-
+REGRA FUNDAMENTAL 
+{exif_info}
 Se a imagem contiver metadados (EXIF), eles devem ser avaliados antes de qualquer inferência visual e tratados como evidência primária.
-
 A inferência visual:
 
 Deve complementar, confirmar ou questionar os metadados
-
 Nunca deve substituí-los sem justificativa técnica clara
 
 🧾 ESTRUTURA OBRIGATÓRIA DO RELATÓRIO
+
 1. CONCLUSÃO TÉCNICA (RESUMO EXECUTIVO)
 
 Apresente imediatamente:
@@ -51,15 +84,10 @@ Apresente imediatamente:
 Localização mais provável (cidade, região ou zona geográfica compatível)
 
 Fonte principal da inferência:
-
 Metadados
-
 Análise visual
-
 Cruzamento entre ambos
-
 Grau geral de confiança (em %)
-
 Observação crítica sobre a confiabilidade do resultado (quando aplicável)
 
 ⚠️ Esta seção deve ser direta, objetiva e conclusiva.
@@ -68,15 +96,10 @@ Nenhuma explicação longa deve aparecer aqui.
 2. VERIFICAÇÃO E ANÁLISE DE METADADOS
 
 Informe explicitamente:
-
 Se existem ou não metadados na imagem
-
 Caso existam, liste:
-
 Coordenadas GPS
-
 Data e hora de captura
-
 Dispositivo ou câmera
 
 Avalie:
@@ -199,6 +222,8 @@ Proibido apresentar hipóteses como fatos
 
         model = genai.GenerativeModel(model_name=modelo_escolhido)
 
+        # Rebobinar o arquivo para reutilizar na análise visual
+        img_file.seek(0)
         img = PIL.Image.open(img_file)
         if img.mode in ("RGBA", "P"):
             img = img.convert("RGB")
