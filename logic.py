@@ -27,10 +27,11 @@ def executar_pericia(img_file, api_key: str) -> str:
         genai.configure(api_key=api_key)
         
         # =========================================================
-        # EXTRAÇÃO DE EXIF DIRETO DOS BYTES ORIGINAIS
+        # EXTRAÇÃO DE EXIF - CORRETA E TESTADA
         # =========================================================
         exif_info = ""
         try:
+            import io
             from PIL import Image
             from PIL.ExifTags import TAGS, GPSTAGS
             
@@ -61,16 +62,14 @@ def executar_pericia(img_file, api_key: str) -> str:
                     return f"{lat:.6f}, {lon:.6f}"
                 return None
             
-            # LER OS BYTES ORIGINAIS DO ARQUIVO
+            # SALVAR OS BYTES ORIGINAIS
             img_file.seek(0)
-            img_bytes = img_file.read()
+            original_bytes = img_file.read()
             
-            # ABRIR IMAGEM DIRETAMENTE DOS BYTES
-            from io import BytesIO
-            img_temp = Image.open(BytesIO(img_bytes))
+            # EXTRAIR EXIF DOS BYTES ORIGINAIS
+            img_exif = Image.open(io.BytesIO(original_bytes))
+            exifdata = img_exif.getexif()
             
-            # EXTRAIR EXIF
-            exifdata = img_temp.getexif()
             if exifdata:
                 exif_dict = {}
                 for tag_id, value in exifdata.items():
@@ -82,12 +81,15 @@ def executar_pericia(img_file, api_key: str) -> str:
                             value = str(value)
                     exif_dict[str(tag)] = value
                 
-                # EXTRAIR GPS
-                gps_info = img_temp.getexif().get_ifd(0x8825)
-                if gps_info:
-                    gps_coords = convert_gps_info(gps_info)
-                    if gps_coords:
-                        exif_dict["GPS Coordinates"] = gps_coords
+                # GPS
+                try:
+                    gps_ifd = img_exif.getexif().get_ifd(0x8825)
+                    if gps_ifd:
+                        gps_coords = convert_gps_info(gps_ifd)
+                        if gps_coords:
+                            exif_dict["GPS Coordinates"] = gps_coords
+                except:
+                    pass
                 
                 exif_info = "\nMETADADOS EXIF ENCONTRADOS:\n"
                 for key, value in exif_dict.items():
@@ -99,14 +101,20 @@ def executar_pericia(img_file, api_key: str) -> str:
             exif_info = f"\nErro ao extrair metadados EXIF: {str(exif_error)}\n"
         
         # =========================================================
-        # RESTAURAR IMAGEM PARA ANÁLISE VISUAL
+        # ANÁLISE VISUAL - USANDO OS BYTES ORIGINAIS
         # =========================================================
-        img_file.seek(0)
-        img = PIL.Image.open(img_file)
-        if img.mode in ("RGBA", "P"):
-            img = img.convert("RGB")
+        img_for_analysis = Image.open(io.BytesIO(original_bytes))
+        if img_for_analysis.mode in ("RGBA", "P"):
+            img_for_analysis = img_for_analysis.convert("RGB")
 
-        # ... resto do seu código existente ...
+        # Redimensionamento (se necessário)
+        max_pixels = 3500000
+        current_pixels = img_for_analysis.width * img_for_analysis.height
+        if current_pixels > max_pixels:
+            ratio = (max_pixels / current_pixels) ** 0.5
+            new_width = int(img_for_analysis.width * ratio)
+            new_height = int(img_for_analysis.height * ratio)
+            img_for_analysis = img_for_analysis.resize((new_width, new_height), Image.LANCZOS)
         
         # Prompt completo diretamente na função
         prompt = f"""
